@@ -51,14 +51,18 @@ export const useTicketStore = defineStore("tickets", {
     },
 
     async createTicketReply(code, payload) {
-      // TODO: Implement createTicketReply action
-      // Steps:
-      // 1. Set loading state
-      // 2. Make API call to create reply
-      // 3. Set success message
-      // 4. Return reply data
-      // 5. Handle error
-      // 6. Reset loading state
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post(`/ticket-reply/${code}`, payload);
+
+        this.success = response.data.message;
+        return response.data.data;
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
     },
   },
 });
