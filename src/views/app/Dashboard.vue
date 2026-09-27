@@ -1,21 +1,41 @@
 <script setup>
-// TODO: Import necessary dependencies
-// Hint: You'll need to import from vue, pinia, lodash, feather-icons, and luxon
+import { onMounted, ref, watch } from "vue";
+import { useTicketStore } from "@/stores/ticket";
+import { storeToRefs } from "pinia";
+import { debounce } from "lodash";
+import feather from "feather-icons";
+import { DateTime } from "luxon";
+import { capitalize } from "lodash";
 
-// TODO: Initialize ticket store and get necessary refs
-// Hint: Use useTicketStore() and storeToRefs()
+const ticketStore = useTicketStore();
+const { tickets, success } = storeToRefs(ticketStore);
+const { fetchTickets } = ticketStore;
 
 // TODO: Create filters ref with search fields
 // Hint: You'll need search, status, priority, and date
 const filters = ref({
-  // Your filter fields here
+  search: "",
+  status: "",
+  priority: "",
+  date: "",
 });
 
 // TODO: Implement watch effect on filters
 // Hint: Use debounce and call fetchTickets with updated filters
+watch(
+  filters,
+  debounce(async () => {
+    await fetchTickets(filters.value);
+  }, 300),
+  { deep: true },
+);
 
 // TODO: Implement onMounted hook
 // Hint: Fetch initial tickets and initialize feather icons
+onMounted(async () => {
+  await fetchTickets();
+  feather.replace();
+});
 </script>
 
 <template>
@@ -57,7 +77,7 @@ const filters = ref({
         <select v-model="filters.status" class="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
           <option value="">Semua Status</option>
           <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
+          <option value="onprogress">In Progress</option>
           <option value="resolved">Resolved</option>
           <option value="rejected">Rejected</option>
         </select>
@@ -87,8 +107,28 @@ const filters = ref({
           <div class="flex-1">
             <div class="flex items-center space-x-3">
               <h3 class="text-lg font-semibold text-gray-800">{{ ticket.title }}</h3>
-              <span class="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">Open</span>
-              <span class="px-3 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">Tinggi</span>
+              <span
+                class="px-3 py-1 text-sm rounded-lg"
+                :class="{
+                  'text-blue-700 bg-blue-100': ticket.status === 'open',
+                  'text-yellow-700 bg-yellow-100': ticket.status === 'onprogress',
+                  'text-green-700 bg-green-100': ticket.status === 'resolved',
+                  'text-red-700 bg-red-100': ticket.status === 'rejected',
+                }"
+              >
+                {{ capitalize(ticket.status) }}
+              </span>
+
+              <span
+                class="px-3 py-1 text-sm rounded-lg"
+                :class="{
+                  'text-red-700 bg-red-100': ticket.priority === 'high',
+                  'text-yellow-700 bg-yellow-100': ticket.priority === 'medium',
+                  'text-green-700 bg-green-100': ticket.priority === 'low',
+                }"
+              >
+                {{ capitalize(ticket.priority) }}
+              </span>
             </div>
             <p class="text-sm text-gray-500 mt-1">#{{ ticket.code }} • Dibuat pada {{ DateTime.fromISO(ticket.created_at).toFormat("dd MMMM yyyy, HH:mm") }}</p>
             <p class="text-sm text-gray-600 mt-2">{{ ticket.description }}</p>

@@ -7,15 +7,16 @@ import feather from "feather-icons";
 import { DateTime } from "luxon";
 import { useRoute } from "vue-router";
 
+const ticketStore = useTicketStore();
+const { success, error, loading } = storeToRefs(ticketStore);
+const { fetchTicket, createTicketReply } = ticketStore;
+
 const route = useRoute();
+
 const ticket = ref({});
 const form = ref({
   content: "",
 });
-
-const ticketStore = useTicketStore();
-const { success, error, loading } = storeToRefs(ticketStore);
-const { fetchTicket, createTicketReply } = ticketStore;
 
 const fetchTicketDetail = async () => {
   const response = await fetchTicket(route.params.code);
@@ -29,6 +30,10 @@ const fetchTicketDetail = async () => {
 // Then refetch ticket details
 const handleSubmit = async () => {
   await createTicketReply(route.params.code, form.value);
+
+  error.value = null;
+  form.value.content = null;
+
   await fetchTicketDetail();
 };
 
@@ -115,7 +120,8 @@ onMounted(async () => {
           </div>
           <button class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
             <i data-feather="send" class="w-4 h-4 inline-block mr-2"></i>
-            Kirim Balasan
+            <span v-if="!loading"> Kirim Balasan </span>
+            <span v-else> Loading... </span>
           </button>
         </div>
       </form>

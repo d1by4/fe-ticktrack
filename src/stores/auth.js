@@ -20,6 +20,7 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     async login(credentials) {
       this.loading = true;
+      this.error = null;
 
       try {
         const response = await axiosInstance.post("/login", credentials);
@@ -43,13 +44,19 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async register(credentials) {
-      // TODO: Implement register action
-      // Steps:
-      // 1. Set loading state
-      // 2. Make API call to register endpoint
-      // 3. Store token in cookies
-      // 4. Handle success/error
-      // 5. Redirect user
+      this.loading = true;
+
+      try {
+        const response = await axiosInstance.post("/register", credentials);
+        this.success = response.data.message;
+        const token = response.data.data.token;
+        Cookies.set("token", token);
+        router.push({ name: "app.dashboard" });
+      } catch (error) {
+        this.error = handleError(error);
+      } finally {
+        this.loading = false;
+      }
     },
 
     async logout() {
